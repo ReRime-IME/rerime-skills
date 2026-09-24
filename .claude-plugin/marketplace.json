@@ -1,0 +1,11 @@
+{
+  "name": "rerime-skills",
+  "owner": { "name": "ReRime" },
+  "plugins": [
+    {
+      "name": "rerime-dictionary",
+      "source": "./plugins/rerime-dictionary",
+      "description": "Turn your own word lists into a ReRime personal dictionary (.rerimedict) and send it to iPhone by AirDrop."
+    }
+  ]
+}
