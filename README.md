@@ -28,9 +28,20 @@ folder (for example `~/.codex/skills/`). It is a plain `SKILL.md` with one check
 UTF-8, no header, `phrase<TAB>pinyin<TAB>frequency` per line, for example
 `星河工作室	xinghegongzuoshi	500`. The limits are:
 
-- a phrase is at most 80 characters;
+- a phrase is at most 80 characters, has no control characters and does not start
+  with `#` (ReRime reads such lines as comments);
 - pinyin is 1–96 lowercase letters;
 - frequency is an integer from 1 to 1,000,000;
 - a file is at most 2 MiB and 10,000 entries.
 
+Check a file before sending it:
+
+```bash
+python3 plugins/rerime-dictionary/skills/rerime-dictionary/scripts/validate_rerimedict.py 我的词库.rerimedict
+```
+
 Your files stay on your devices. The skill converts only what you give it.
+
+## License
+
+Apache-2.0

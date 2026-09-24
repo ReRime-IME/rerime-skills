@@ -2,5 +2,17 @@
   "name": "rerime-dictionary",
   "description": "Turn your own word lists into a ReRime personal dictionary (.rerimedict) and send it to iPhone by AirDrop.",
   "version": "1.0.0",
-  "license": "Apache-2.0"
+  "author": {
+    "name": "ReRime"
+  },
+  "homepage": "https://github.com/ReRime-IME/rerime-skills",
+  "repository": "https://github.com/ReRime-IME/rerime-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "rerime",
+    "rime",
+    "pinyin",
+    "dictionary",
+    "ime"
+  ]
 }

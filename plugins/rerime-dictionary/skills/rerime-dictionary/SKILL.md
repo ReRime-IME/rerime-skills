@@ -26,7 +26,9 @@ phrase<TAB>pinyin<TAB>frequency
 星河工作室	xinghegongzuoshi	500
 ```
 
-- **phrase:** 1–80 characters, no tabs or line breaks.
+- **phrase:** 1–80 characters, with no tabs, line breaks, control characters or
+  invisible format characters (such as the zero-width joiner in combined emoji).
+  It must not start with `#`: ReRime skips such lines as comments.
 - **pinyin:** toneless full pinyin in lowercase a–z, 1–96 letters. Remove tones,
   spaces and syllable separators, and write ü as `v`. Never pass off Wubi,
   double pinyin, abbreviations or other codes as full pinyin.
@@ -46,9 +48,10 @@ phrase<TAB>pinyin<TAB>frequency
      than guessing.
 3. **Check the limits.** If the output would pass 2 MiB or 10,000 entries, stop and
    ask the user what to keep. Never truncate silently.
-4. **Validate** with the bundled checker, and fix every error it reports:
+4. **Validate** with the checker in this skill's directory, and fix every error it
+   reports:
    ```bash
-   python3 scripts/validate_rerimedict.py "<name>.rerimedict"
+   python3 "<this skill's directory>/scripts/validate_rerimedict.py" "<name>.rerimedict"
    ```
 5. **Report** converted, skipped and uncertain counts with short reasons, plus up to
    five sample lines.
@@ -58,7 +61,7 @@ phrase<TAB>pinyin<TAB>frequency
    - **On iPhone:** tapping the received file opens ReRime's import preview; tap
      导入 / Import to finish.
    - **Without AirDrop:** save the file to iCloud Drive or Files, then open it on the
-     iPhone, or use ReRime → 词库 → 从文件导入.
+     iPhone, or open ReRime → 词库与更新 (Dictionary) → 从文件导入 (Import from File).
 
 If the tool cannot write files, output the file's plain text contents (not a
 Markdown table) so the user can save it as `<name>.rerimedict`.

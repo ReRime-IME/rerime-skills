@@ -1,6 +1,11 @@
 {
   "name": "rerime-skills",
-  "owner": { "name": "ReRime" },
+  "owner": {
+    "name": "ReRime"
+  },
+  "metadata": {
+    "description": "Open Skills for building ReRime dictionaries with AI"
+  },
   "plugins": [
     {
       "name": "rerime-dictionary",
