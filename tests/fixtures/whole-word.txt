@@ -1,0 +1,15 @@
+# Synthetic test table: invented shape-style codes; words are not the joined codes of their characters.
+天	gdi
+地	fbn
+玄	yxu
+黄	amw
+宇	pgf
+宙	pmf
+洪	iaw
+荒	ayn
+天地	gdfb
+玄黄	yxam
+宇宙	pgpm
+洪荒	iaay
+天地玄黄	gfya	20
+宇宙洪荒	ppia	10

@@ -1,0 +1,12 @@
+天	ba
+地	bo
+玄	da
+黄	do
+天地	babo
+宇	b2
+宙
+洪	ga	gb	gc
+荒	ga	high
+日​月	go
+天	ba
+$ddcmd(x)	ka

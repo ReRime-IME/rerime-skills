@@ -9,6 +9,10 @@ CSV, TSV, TXT, spreadsheets or a ZIP). It builds a `.rerimedict` file, validates
 and helps you AirDrop it to your iPhone. Tap the file on iPhone and ReRime shows the
 import preview.
 
+When your file is typed by codes that are not Pinyin (Wubi, Cangjie, a romanization
+of another language), the same skill builds a table that ReRime adds as an input
+scheme of its own: see [Codes that are not Pinyin](#codes-that-are-not-pinyin).
+
 ### Claude Code
 
 ```
@@ -21,7 +25,7 @@ Then ask, for example: “把 ~/Downloads/我的词库.xlsx 做成 ReRime 词库
 ### Other agents
 
 Copy `plugins/rerime-dictionary/skills/rerime-dictionary` into your agent's skills
-folder (for example `~/.codex/skills/`). It is a plain `SKILL.md` with one checker script.
+folder (for example `~/.codex/skills/`). It is a plain `SKILL.md` with two checker scripts.
 
 ### File format
 
@@ -39,6 +43,57 @@ Check a file before sending it:
 ```bash
 python3 plugins/rerime-dictionary/skills/rerime-dictionary/scripts/validate_rerimedict.py 我的词库.rerimedict
 ```
+
+### Codes that are not Pinyin
+
+A table typed by its own codes (Wubi, Cangjie, Zhengma, a romanization of another
+language or script) is not a `.rerimedict`. The skill writes it as a plain text file,
+`text<TAB>code` per line with an optional third column for a weight, for example
+`星河	xhe`. ReRime 1.4.0 or later adds it as an input scheme beside its Pinyin schemes.
+The limits are:
+
+- a code is lowercase letters a–z, at most 96;
+- a text is at most 80 characters, with no control or invisible characters;
+- a weight, when present, is a whole number of at most 10 digits;
+- a file is UTF-8, at most 16 MiB and 300,000 rows, and has at least 2 rows.
+
+A Rime dictionary (`*.dict.yaml`) that meets these rules needs no conversion. The
+skill keeps the codes of an existing table exactly as they are.
+
+ReRime decides from the table's structure how to run it. When multi-character words
+are coded as the joined codes of their characters, and each character has a row of
+its own, the table runs **by syllable**: words can be typed by first letters or
+prefixes, and closing letters such as tone letters become optional. Otherwise, or
+with more than 3,500 syllables or 20,000 syllable spellings, it runs **whole word**:
+each row is typed by its full code.
+
+Check a table before sending it. The checker lists the rows ReRime would skip and
+says which way the table will run and why:
+
+```bash
+python3 plugins/rerime-dictionary/skills/rerime-dictionary/scripts/validate_rerime_table.py 我的方案.txt
+```
+
+```
+OK 40 rows, 493 bytes
+Run mode: by syllable
+  10 of 10 multi-character rows are coded as the joined codes of their characters (ReRime needs 99%)
+  30 syllables (at most 3,500), 90 spellings (at most 20,000)
+  optional trailing letters: p, t, x (a syllable can be typed without them)
+```
+
+On the iPhone, save the file in Files, then open ReRime → Keyboard Layout → Input
+Scheme → Add Input Scheme… and pick it. ReRime keeps one such scheme at a time.
+
+Before you share a table that someone else made, ask its author for permission.
+
+### Tests
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The fixtures in `tests/fixtures` are synthetic: invented codes, not a real input scheme.
 
 Your files stay on your devices. The skill converts only what you give it.
 

@@ -4,13 +4,14 @@
     "name": "ReRime"
   },
   "metadata": {
-    "description": "Open Skills for building ReRime dictionaries with AI"
+    "description": "Open Skills for building ReRime dictionaries and input-scheme tables with AI"
   },
   "plugins": [
     {
       "name": "rerime-dictionary",
       "source": "./plugins/rerime-dictionary",
-      "description": "Turn your own word lists into a ReRime personal dictionary (.rerimedict) and send it to iPhone by AirDrop."
+      "description": "Turn your own word lists into a ReRime personal dictionary (.rerimedict), or a table typed by its own codes into a ReRime input scheme, and send it to iPhone by AirDrop.",
+      "version": "1.1.0"
     }
   ]
 }
