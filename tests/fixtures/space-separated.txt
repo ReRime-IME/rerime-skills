@@ -1,0 +1,10 @@
+# Synthetic test table: invented codes, separated by spaces.
+天 bap
+地 bop
+玄 dap
+黄 dop
+宇 gap
+宙 gop
+天地 bapbop
+宇宙 gapgop
+玄黄 dapdop 7

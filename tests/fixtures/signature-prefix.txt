@@ -1,0 +1,3 @@
+GIF89	bap
+天	bop
+地	dap

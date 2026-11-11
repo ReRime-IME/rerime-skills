@@ -60,25 +60,61 @@ beside its Pinyin schemes: Keyboard Layout → Input Scheme → Add Input Scheme
 1. **An existing table**: a Rime `*.dict.yaml`, or a text file of words and codes.
    Its codes are final: keep every code exactly as it is. Never invent, complete,
    shorten or "correct" a code, even one that looks wrong; report doubts instead.
-   A Rime dictionary that passes the checker needs no conversion: ReRime reads it
-   as it is, also from inside a ZIP, and ignores scheme configuration, scripts and
-   programs beside it. (`import_tables` is followed only inside a ZIP.)
+   Run the checker on the file as it is first (see "What ReRime reads as it is"):
+   a file that passes needs no conversion.
 2. **An export from another input method** (a custom phrase list, a CSV, a
-   spreadsheet). Convert the layout only; the codes stay exactly as exported.
+   spreadsheet). Check it as it is first: ReRime reads Baidu and Sogou style phrase
+   lists directly. Otherwise convert the layout only; the codes stay exactly as
+   exported.
 3. **Only a word list plus spelling rules the user owns.** Only here do you write
    codes, and only by the user's rules: ask for the rules, apply them, and list every
    word the rules do not cover instead of guessing. Build the table as described in
    "Building a table from a word list".
 
+### What ReRime reads as it is
+
+ReRime recognises a file by its content, not by its name, and the checker reads the
+same files the same way. Give the checker the user's own file before converting
+anything; when it reports no skipped rows and no error, the file can go to the
+iPhone unchanged.
+
+- **Encodings:** UTF-8, UTF-16 (with or without a byte order mark) and GB18030
+  (which covers GBK and GB2312). Other encodings, UTF-32 included, are refused.
+- **A Rime dictionary** (`*.dict.yaml`): the header's `columns` gives the order;
+  `sort: original` keeps the file's order within a code. `import_tables` is followed
+  only inside a ZIP.
+- **A plain table**, tab-separated or separated by spaces, with the text or the
+  code first (the column that is all letters is the code) and an optional weight.
+  One tab anywhere makes the whole file tab-separated. In the space-separated shape
+  a line `code word1 word2 …` is one row per word. Rows before a line `[DATA]` or
+  `[数据]` are not read.
+- **A phrase list** exported by another input method, in one of three forms:
+  `code=1,phrase` (Baidu phone, QQ, iFlytek), `code,1=phrase` (Sogou) or
+  `1,code=phrase` (Baidu PC). The number orders the phrases of one code. A phrase
+  that continues on other lines, or a dynamic value that starts with `#`, is skipped.
+- **A ZIP** that holds any of these. ReRime opens only members named `*.dict.yaml`,
+  `*.yaml`, `*.txt`, `*.tsv` or `*.ini`, extracts nothing, and ignores scheme
+  configuration, scripts, programs and fonts. It refuses a ZIP whose tables are
+  password-protected, a ZIP larger than 64 MiB, one with more than 512 files or a
+  table over 16 MiB, one with a path that leaves the archive, and one that is
+  irregular in other ways. When a ZIP holds several tables ReRime asks which one to
+  add (the one a scheme file names comes first); the checker lists them and checks
+  the first, or the one given with `--table ID`.
+
+Not accepted: scheme files, compiled or binary dictionaries (`.bin`, `.scel`, …),
+and any file whose first bytes are those of a picture, document or program.
+
 ### Table format
 
+When you write or convert a table yourself, write this one form.
 `<name>.txt`: UTF-8 without a byte order mark, no header, one row per line,
 tab-separated:
 
     text<TAB>code
     text<TAB>code<TAB>weight
 
-- **text:** 1–80 characters. No tabs, line breaks, control, directional or invisible
+- **text:** 1–80 characters (as a person counts them: a letter with its marks is
+  one). No tabs, line breaks, control, directional or invisible
   characters (this includes the variation selector inside some emoji), no private-use
   characters, and no space other than a plain or full-width one. It must not start
   with `#` (a comment line) or with `$` followed by a letter or `[`. ReRime also
@@ -132,10 +168,12 @@ and the user's to make.
 ### Steps for a table
 
 1. **Inspect** the input's format and encoding, and find out which of the three cases
-   it is.
-2. **Convert** to the format above. Skip a row that cannot meet a rule and count it by
-   reason; never repair a row by changing its code or removing characters from its
-   text.
+   it is. Run the checker on the file as it is: if ReRime reads it without skipping
+   anything, go to step 5 with the user's own file.
+2. **Convert** to the format above when the file is not read as it is, or when the
+   user wants its skipped rows fixed. Skip a row that cannot meet a rule and count it
+   by reason; never repair a row by changing its code or removing characters from
+   its text.
 3. **Check the limits.** Over 300,000 rows or 16 MiB: stop and ask the user what to
    keep.
 4. **Validate** and fix what the checker reports (for an existing table, report the
@@ -144,8 +182,8 @@ and the user's to make.
    python3 "<this skill's directory>/scripts/validate_rerime_table.py" "<name>.txt"
    ```
    `SKIP line N` is a row ReRime would leave out, `ERROR` a file it would refuse,
-   `NOTE` something to pass on. The checker reads UTF-8 tab-separated tables and
-   Rime dictionaries.
+   `NOTE` something to pass on (how the file was read, for example). The checker
+   reads everything listed in "What ReRime reads as it is", a ZIP included.
 5. **Report** rows, skipped rows with reasons, up to five sample rows, and the run
    mode with its reason.
 6. **Send to iPhone and add it.** Send the file as in "Send to iPhone" below and save

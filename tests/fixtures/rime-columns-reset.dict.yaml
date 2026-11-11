@@ -1,0 +1,7 @@
+---
+name: sample
+columns: [code, text]
+columns:
+...
+天	bap
+地	bop

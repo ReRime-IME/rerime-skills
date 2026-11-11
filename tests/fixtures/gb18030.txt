@@ -1,0 +1,17 @@
+# 测试码表
+天	bap
+地	bop
+玄	dap
+黄	dop
+宇	gap
+宙	gop
+洪	kap
+荒	kop
+日	map
+月	mop
+盈	bat
+昃	bot
+天地	bapbop
+宇宙	gapgop
+日月	mapmop
+洪荒	kapkop

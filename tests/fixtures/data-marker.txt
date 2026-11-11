@@ -1,0 +1,6 @@
+Synthetic test table with a settings part before the rows.
+name=sample
+[DATA]
+天	bap
+地	bop
+天地	bapbop

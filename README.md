@@ -57,8 +57,12 @@ The limits are:
 - a weight, when present, is a whole number of at most 10 digits;
 - a file is UTF-8, at most 16 MiB and 300,000 rows, and has at least 2 rows.
 
-A Rime dictionary (`*.dict.yaml`) that meets these rules needs no conversion. The
-skill keeps the codes of an existing table exactly as they are.
+ReRime also reads many existing files as they are, and the checker reads them the same
+way: UTF-8, UTF-16 or GB18030 text; a Rime dictionary (`*.dict.yaml`); a plain table
+separated by tabs or spaces with the text or the code first; a Baidu or Sogou style
+phrase list (`code=1,phrase`, `code,1=phrase`, `1,code=phrase`); and a ZIP that holds
+one of these. A file that passes the checker needs no conversion. The skill keeps the
+codes of an existing table exactly as they are.
 
 ReRime decides from the table's structure how to run it. When multi-character words
 are coded as the joined codes of their characters, and each character has a row of
@@ -67,8 +71,10 @@ prefixes, and closing letters such as tone letters become optional. Otherwise, o
 with more than 3,500 syllables or 20,000 syllable spellings, it runs **whole word**:
 each row is typed by its full code.
 
-Check a table before sending it. The checker lists the rows ReRime would skip and
-says which way the table will run and why:
+Check a table before sending it. The checker lists the rows ReRime would skip, says how
+the file was read when that is not the plain form, and says which way the table will run
+and why. For a ZIP with several tables it lists them and checks the one ReRime
+preselects; `--table ID` checks another.
 
 ```bash
 python3 plugins/rerime-dictionary/skills/rerime-dictionary/scripts/validate_rerime_table.py 我的方案.txt
@@ -94,6 +100,12 @@ python3 -m unittest discover -s tests -v
 ```
 
 The fixtures in `tests/fixtures` are synthetic: invented codes, not a real input scheme.
+
+The table checker is compared with ReRime's own importer (the App's Swift code) on a
+generated corpus of 383 files; the importer's answers are kept in
+`tests/parity/expected.json` and the tests require the checker to give the same.
+[tests/parity/README.md](tests/parity/README.md) says what is compared and how to run
+the comparison again with the App's source.
 
 Your files stay on your devices. The skill converts only what you give it.
 
