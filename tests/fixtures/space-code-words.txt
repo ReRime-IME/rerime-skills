@@ -1,0 +1,5 @@
+# Synthetic test table: one code, then every word typed by it.
+bap 天 填
+bop 地
+dap 玄 旋 悬
+dop 黄 8
