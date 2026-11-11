@@ -69,7 +69,8 @@ are coded as the joined codes of their characters, and each character has a row 
 its own, the table runs **by syllable**: words can be typed by first letters or
 prefixes, and closing letters such as tone letters become optional. Otherwise, or
 with more than 3,500 syllables or 20,000 syllable spellings, it runs **whole word**:
-each row is typed by its full code.
+each row is found by its own code (the beginning of a code already offers matching
+rows, and full codes typed in a row compose), without first-letter typing.
 
 Check a table before sending it. The checker lists the rows ReRime would skip, says how
 the file was read when that is not the plain form, and says which way the table will run
@@ -82,14 +83,22 @@ python3 plugins/rerime-dictionary/skills/rerime-dictionary/scripts/validate_reri
 
 ```
 OK 40 rows, 493 bytes
+Name: 我的方案 (from the file's name; shown on the Space key, editable in ReRime's preview; Replace… keeps the installed scheme's name)
 Run mode: by syllable
   10 of 10 multi-character rows are coded as the joined codes of their characters (ReRime needs 99%)
   30 syllables (at most 3,500), 90 spellings (at most 20,000)
   optional trailing letters: p, t, x (a syllable can be typed without them)
 ```
 
+Name the file as the scheme should be called (at most 16 characters; it is shown on the
+Space key). The checker cannot know which characters an iPhone can draw: for rare
+scripts ReRime may import fewer rows than the checker reports, and the checker says so.
+A line that starts with `#` is a comment: ReRime neither imports it nor counts it as
+skipped.
+
 On the iPhone, save the file in Files, then open ReRime → Keyboard Layout → Input
-Scheme → Add Input Scheme… and pick it. ReRime keeps one such scheme at a time.
+Scheme → Add Input Scheme… and pick it. ReRime keeps one such scheme at a time;
+replacing it keeps the installed name unless you edit it in the preview.
 
 Before you share a table that someone else made, ask its author for permission.
 

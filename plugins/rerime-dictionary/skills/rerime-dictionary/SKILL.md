@@ -108,7 +108,10 @@ and any file whose first bytes are those of a picture, document or program.
 
 When you write or convert a table yourself, write this one form.
 `<name>.txt`: UTF-8 without a byte order mark, no header, one row per line,
-tab-separated:
+tab-separated. **Name the file as the scheme should be called**: ReRime fills the
+scheme's name from the file's name without its extension (from `name:` for a Rime
+dictionary). The name is shown on the Space key and holds at most 16 characters;
+ask the user what to call the scheme, and keep it short.
 
     text<TAB>code
     text<TAB>code<TAB>weight
@@ -117,14 +120,21 @@ tab-separated:
   one). No tabs, line breaks, control, directional or invisible
   characters (this includes the variation selector inside some emoji), no private-use
   characters, and no space other than a plain or full-width one. It must not start
-  with `#` (a comment line) or with `$` followed by a letter or `[`. ReRime also
-  skips a row whose text the iPhone has no font for; the checker cannot see that.
+  with `$` followed by a letter or `[`. ReRime also skips a row whose text the
+  iPhone has no font for (rare scripts, very new characters); the checker cannot see
+  that, so its row counts are an upper bound for such text and it prints a note.
+- **A line that starts with `#` is a comment, not a row.** ReRime does not import
+  it and does not count it as skipped, and the checker prints no `SKIP` for it: a
+  word that really starts with `#` disappears without a trace. The checker prints
+  a `NOTE` for `#` lines that look like rows; report those to the user as words
+  ReRime cannot take.
 - **code:** letters a–z only, 1–96 letters, lowercase. No digits, punctuation or
   tone marks. When the source separates the codes of a word's characters with
   spaces, one space between them is allowed; ReRime does not need it.
 - **weight:** optional. Digits only, at most 10. Leave the column out when the
-  source has none; a third column that is not a whole number makes ReRime skip the
-  row. Within one code, the higher weight comes first, rows without a weight come
+  source has none. A third column that is not a whole number (`1.5`, `high`) makes
+  ReRime skip the row. A whole number of more than 10 digits does not: ReRime keeps
+  the row and ignores the weight (the checker prints a `NOTE`). Within one code, the higher weight comes first, rows without a weight come
   after those with one, and equal rows keep the file's order.
 - **Limits:** at most 300,000 rows and 16 MiB, at least 2 rows, a line at most
   4,096 bytes. ReRime skips a row that breaks a rule and merges rows with the same
@@ -141,10 +151,14 @@ ReRime decides this from the table's structure, not from its language:
   syllables or by any prefix of them, words the table does not list can be composed
   syllable by syllable, and closing letters that alternate on one stem (tone letters,
   for example) become optional.
-- **Whole word**, otherwise: each row is typed by its full code. A table built by
-  syllable also runs whole word when it has more than 3,500 syllables or more than
-  20,000 syllable spellings. Shape-based tables such as Wubi or Cangjie are whole
-  word, and that is how they are meant to be typed.
+- **Whole word**, otherwise: each row is found by its own code. The beginning of a
+  code already offers the rows whose codes start with it, and full codes typed one
+  after another compose a word. What whole word does not have is what by syllable
+  adds: typing a word by the first letters of its syllables, and leaving out
+  closing letters. A table built by syllable also runs whole word when it has more
+  than 3,500 syllables or more than 20,000 syllable spellings. Shape-based tables
+  such as Wubi or Cangjie are whole word, and that is how they are meant to be
+  typed.
 
 The checker prints the run mode and its reasons. Tell the user which mode their table
 gets and why, with the checker's counts: the share of rows coded by syllable, the
@@ -182,17 +196,23 @@ and the user's to make.
    python3 "<this skill's directory>/scripts/validate_rerime_table.py" "<name>.txt"
    ```
    `SKIP line N` is a row ReRime would leave out, `ERROR` a file it would refuse,
-   `NOTE` something to pass on (how the file was read, for example). The checker
-   reads everything listed in "What ReRime reads as it is", a ZIP included.
-5. **Report** rows, skipped rows with reasons, up to five sample rows, and the run
-   mode with its reason.
+   `NOTE` something to pass on (how the file was read, for example), `Name:` what
+   ReRime will call the scheme. The checker reads everything listed in "What ReRime
+   reads as it is", a ZIP included.
+5. **Report** rows, skipped rows with reasons, up to five sample rows, the run mode
+   with its reason, the scheme's name, and every `NOTE`: `#` lines that look like
+   rows, ignored weights, and, when the checker says the iPhone may import fewer
+   rows, that the count is an upper bound.
 6. **Send to iPhone and add it.** Send the file as in "Send to iPhone" below and save
    it in Files. Then, in ReRime: Keyboard Layout → Input Scheme → Add Input Scheme…,
-   pick the file, check the preview, tap Import. Add it from this menu rather than
+   pick the file, check the preview (the name can be edited there), tap Import. Add
+   it from this menu rather than
    by tapping the file: when a file is small and mostly Chinese, a tap opens the
    personal dictionary import instead. When a scheme is already installed, the menu
    has no Add Input Scheme…; open the scheme's own page there and choose Replace…
-   (替换…), which also removes the words learned in the old one.
+   (替换…), which also removes the words learned in the old one. A replaced scheme
+   keeps the installed scheme's name, whatever the new file is called; to rename
+   it, edit the name in the preview or on the scheme's page.
 
 The table stays on the user's devices. This skill works from the user's own file; it
 does not search for or download tables.

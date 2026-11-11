@@ -29,8 +29,11 @@ Prints "SKIP line N" for each row ReRime would leave out and "ERROR" when ReRime
 refuse the file, then the run mode. Exits 0 only when nothing is skipped or refused.
 --json prints one machine-readable report instead (used by tests/parity).
 
-Not checked here: whether iOS can draw every character (ReRime skips rows it cannot).
-Characters newer than this Python's Unicode data are treated as unassigned.
+Not checked here: whether iOS can draw every character. ReRime skips rows it cannot
+draw, so for text beyond ASCII and common Chinese the row count printed here is an
+upper bound; a note says so. Characters newer than this Python's Unicode data are
+treated as unassigned. A line that starts with "#" is a comment for ReRime: it is not
+a row and not a skipped row; a note names such lines when they look like rows.
 """
 import codecs
 import hashlib
@@ -53,6 +56,7 @@ MAX_TEXT_CHARACTERS = 80
 MAX_WEIGHT_DIGITS = 10
 MAX_COMBINING_MARKS = 4
 MAX_NAME_CHARACTERS = 40
+MAX_SCHEME_NAME = 16    # What the preview's name field holds.
 MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 512
 MAX_MEMBER_BYTES = 16 * 1024 * 1024
@@ -80,6 +84,8 @@ CONTROL_CATEGORIES = {"Cc", "Cf", "Cs", "Co", "Cn", "Zl", "Zp"}
 MARK_CATEGORIES = {"Mn", "Mc", "Me"}
 # Printable ASCII, unified Han and Yi syllables: one character each and nothing to check.
 PLAIN_TEXT = re.compile("[\x20-\x7e\u3400-\u4db5\u4e00-\u9fa5\ua000-\ua48c\U00020000-\U0002a6d6]*")
+# Characters every iPhone draws: for other text the row count here is an upper bound.
+DRAWN_FOR_SURE = re.compile("[\\x20-\\x7e\\u4e00-\\u9fa5]*")
 # Blocks where NFC changes nothing (unified Han, Yi); other text is normalized.
 NFC_INERT = [(0x4E00, 0x9FFF), (0x3400, 0x4DBF), (0xA000, 0xA4CF), (0x20000, 0x2EBEF)]
 
@@ -788,6 +794,7 @@ class Collector:
         self.han = 0
         self.long_weights = []
         self.notes = []
+        self.comment_rows = []  # Lines that start with "#" and otherwise look like a row.
 
     def skip(self, line, reason):
         self.skips.append((line, reason))
@@ -833,6 +840,10 @@ def read_rime_body(lines, header, collector):
             continue
         if comments and line[0] == 0x23:
             comments = line != b"# no comment"
+            fields = line.split(b"\t")
+            if (text_at is not None and code_at is not None and max(text_at, code_at) < len(fields)
+                    and looks_like_code(fields[code_at].strip(BLANK), True)):
+                collector.comment_rows.append(number)
             continue
         if len(line) > MAX_LINE_BYTES:
             collector.skip(number, "lineTooLong")
@@ -958,7 +969,14 @@ def read_plain_table(lines, layout, collector):
 
     for number, raw in enumerate(lines[layout["body"]:], start=layout["body"] + 1):
         line = raw.strip(BLANK)
-        if not line or line[0] == 0x23:
+        if not line:
+            continue
+        if line[0] == 0x23:
+            # A comment. When it has the shape of a row, the person may have meant a word.
+            fields = SPACES.split(line) if whitespace else line.split(b"\t")
+            if len(fields) == 2 or (len(fields) == 3 and all_digits(fields[2].strip(BLANK))):
+                if looks_like_code(fields[0 if layout["code_first"] else 1].strip(BLANK), not whitespace):
+                    collector.comment_rows.append(number)
             continue
         if len(line) > MAX_LINE_BYTES:
             collector.skip(number, "lineTooLong")
@@ -1069,7 +1087,7 @@ def finish(collector, reading, name, source_bytes, tables, selected):
         "tables": tables, "selectedTable": selected, "analysis": analysis and analysis["report"], "door": door,
         # Beyond what ReRime's preview holds: every skipped row, the rows, and notes for the person.
         "rows": rows, "skips": skips, "summary": analysis, "longWeights": collector.long_weights,
-        "notes": collector.notes,
+        "notes": collector.notes, "commentRows": collector.comment_rows,
     }
 
 
@@ -1438,13 +1456,16 @@ def read_file(data, file_name=None, table=None):
     return finish(collector, reading, name, len(data), [], None)
 
 
+PERSON_KEYS = ("rows", "skips", "summary", "longWeights", "notes", "commentRows")
+
+
 def report_json(data, file_name=None, table=None):
     """The report in the shape tests/parity compares with ReRime's importer."""
     try:
         report = read_file(data, file_name, table)
     except Refusal as refusal:
         return {"outcome": "refused", **refusal.report(), "door": {"route": "refuse", **refusal.report()}}
-    return {key: value for key, value in report.items() if key not in ("rows", "skips", "summary", "longWeights", "notes")}
+    return {key: value for key, value in report.items() if key not in PERSON_KEYS}
 
 
 def read(data):
@@ -1719,11 +1740,34 @@ def reading_notes(report):
             notes.append("both columns are letters on every line, so the first column is read as the text")
     notes += report["notes"]
     for line in report["longWeights"][:5]:
-        notes.append(f"line {line}: a weight of more than {MAX_WEIGHT_DIGITS} digits is ignored")
+        notes.append(f"line {line}: a weight of more than {MAX_WEIGHT_DIGITS} digits is ignored; the row is kept "
+                     "without a weight")
+    if report["commentRows"]:
+        lines = ", ".join(map(str, report["commentRows"][:10])) + (", …" if len(report["commentRows"]) > 10 else "")
+        notes.append(f"{len(report['commentRows'])} line(s) start with # and look like rows (line {lines}). ReRime "
+                     "reads a # line as a comment: it is not imported and not counted as skipped")
+    beyond = sum(1 for text, _, _ in report["rows"] if not DRAWN_FOR_SURE.fullmatch(text))
+    if beyond:
+        notes.append(f"{beyond:,} row(s) have characters beyond ASCII and common Chinese. ReRime also skips a row "
+                     "with a character the iPhone cannot draw; that is not checked here, so the iPhone may import "
+                     "fewer rows than this report says")
     if report["suggestsEntries"]:
         notes.append("this file is small and mostly Chinese, so a tap on it (AirDrop, Files) opens ReRime's "
                      "personal dictionary import; add it from Keyboard Layout → Input Scheme → Add Input Scheme…")
     return notes
+
+
+def name_line(report):
+    """What ReRime calls the scheme: the preview's name field starts with this."""
+    name = report["suggestedName"]
+    source = "the dictionary's name" if report["reading"]["kind"] == "rimeDictionary" else "the file's name"
+    if name is None:
+        return f"Name: none usable from {source}; type one in ReRime's preview (at most {MAX_SCHEME_NAME} characters)"
+    long = count_characters(name) > MAX_SCHEME_NAME
+    return (f"Name: {name} (from {source}; shown on the Space key, "
+            + (f"longer than the {MAX_SCHEME_NAME} characters a name can have: shorten it" if long
+               else "editable")
+            + " in ReRime's preview; Replace… keeps the installed scheme's name)")
 
 
 def print_skips(skips):
@@ -1781,6 +1825,7 @@ def main(arguments):
         print(f"ReRime would import {count:,} rows and skip {len(skips):,}")
     else:
         print(f"OK {count:,} rows, {len(data):,} bytes")
+    print(name_line(report))
     for line in describe(report["summary"]):
         print(line)
     return 1 if skips else 0

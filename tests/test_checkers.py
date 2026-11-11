@@ -354,6 +354,47 @@ class Formats(unittest.TestCase):
         self.assertIn('"scheme": "rerime_user_syllable"', output)
 
 
+class WhatThePersonIsTold(unittest.TestCase):
+    """Lines of the checker's output that a Simulator walk with ReRime showed were missing."""
+
+    def test_rows_the_iphone_may_not_draw_are_a_reservation(self):
+        # ReRime also skips a row the iPhone cannot draw; the checker cannot know, and says so.
+        code, output = check("天\tba\n地\tbo\nα\tda\n\U00018b00\tdo\n")
+        self.assertEqual(code, 0, output)
+        self.assertIn("OK 4 rows", output)
+        self.assertIn("NOTE 2 row(s) have characters beyond ASCII and common Chinese", output)
+        self.assertIn("the iPhone may import fewer rows than this report says", output)
+        self.assertNotIn("may import fewer rows", check("天\tba\n地\tbo\nabc\tda\n")[1])
+
+    def test_scheme_name(self):
+        code, output = check("天\tba\n地\tbo\n", "快码.txt")
+        self.assertIn("Name: 快码 (from the file's name; shown on the Space key, editable", output)
+        self.assertIn("Replace… keeps the installed scheme's name", output)
+        output = check("天\tba\n地\tbo\n", "a-scheme-name-of-27-letters.txt")[1]
+        self.assertIn("longer than the 16 characters a name can have: shorten it", output)
+        output = check("---\nname: sample\n...\n天\tba\n地\tbo\n", "other.dict.yaml")[1]
+        self.assertIn("Name: sample (from the dictionary's name", output)
+        self.assertIn("Name: none usable", check("天\tba\n地\tbo\n", "a\u200bb.txt")[1])
+
+    def test_long_weight_keeps_the_row(self):
+        code, output = check("天\tba\t12345678901\n地\tbo\t1.5\n玄\tda\n")
+        self.assertIn("NOTE line 1: a weight of more than 10 digits is ignored; the row is kept", output)
+        self.assertRegex(output, "SKIP line 2: not a row")
+        self.assertIn("ReRime would import 2 rows and skip 1", output)
+
+    def test_comment_lines_that_look_like_rows_are_named(self):
+        code, output = check("# a header comment\n天\tba\n#井\tjh\n地\tbo\n# see\t(2)\n")
+        self.assertEqual(code, 0, output)       # A comment is not a skipped row.
+        self.assertNotIn("SKIP", output)
+        self.assertIn("OK 2 rows", output)
+        self.assertIn("NOTE 1 line(s) start with # and look like rows (line 3)", output)
+        self.assertIn("not imported and not counted as skipped", output)
+        self.assertNotIn("look like rows", check("# only a header\n天\tba\n地\tbo\n")[1])
+        output = check("---\nname: sample\n...\n#井\tjh\n天\tba\n# no comment\n#地\tbo\n")[1]
+        self.assertIn("look like rows (line 4)", output)
+        self.assertIn("OK 2 rows", output)      # After "# no comment" a # line is a row.
+
+
 class DictionaryChecker(unittest.TestCase):
     def test_valid(self):
         code, output = run("validate_rerimedict.py", FIXTURES / "valid.rerimedict")
